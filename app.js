@@ -1414,16 +1414,8 @@ function pedidoComplete() {
   return filled(f.tipo);
 }
 
-function prefillsPedido(form) {
-  if (form.bindMode !== "pedido" || form.pedidoId || !state.pedidos.length) return form;
-  const p = state.pedidos[0];
-  form.pedidoId = p.id;
-  form.pedidoQuery = pedidoLabel(p);
-  return form;
-}
-
 function newTaskForm(extra = {}) {
-  return prefillsPedido({
+  return {
     bindMode: "avulso",
     pedidoId: "",
     pedidoQuery: "",
@@ -1437,7 +1429,7 @@ function newTaskForm(extra = {}) {
     interno: "2026-08-28",
     fatal: "2026-09-10",
     ...extra,
-  });
+  };
 }
 
 function syncCreateSave() {
@@ -1720,7 +1712,10 @@ document.addEventListener("click", (e) => {
   if (t.dataset.bindMode) {
     collectForm();
     state.form.bindMode = t.dataset.bindMode;
-    prefillsPedido(state.form);
+    if (t.dataset.bindMode === "pedido") {
+      state.form.pedidoId = "";
+      state.form.pedidoQuery = "";
+    }
     render();
     return;
   }
