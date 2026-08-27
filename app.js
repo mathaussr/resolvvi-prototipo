@@ -1008,18 +1008,16 @@ function teamSwitchModal() {
   `;
 }
 
+function fillOnboardDefaults() {
+  if (!String(state.officeName || "").trim()) state.officeName = "Cardoso Advogados";
+  if (!String(state.userName || "").trim()) state.userName = "Rafael Cardoso";
+  if (!String(state.oab || "").trim()) state.oab = "OAB/SP 123.456";
+  if (!String(state.email || "").trim()) state.email = "rafael@email.com";
+  if (!String(state.phone || "").trim()) state.phone = "(11) 99999-0000";
+}
+
 function onboardComplete() {
-  const filled = [
-    state.userName,
-    state.oab,
-    state.email,
-    state.phone,
-    state.specialty,
-  ].every((v) => String(v || "").trim());
-  if (state.accountType === "escritorio" && !String(state.officeName || "").trim()) {
-    return false;
-  }
-  return filled;
+  return String(state.specialty || "").trim().length > 0;
 }
 
 function onboardVisual() {
@@ -1407,30 +1405,39 @@ function filled(v) {
 
 function createComplete() {
   const f = state.form || {};
-  const base = [f.title, f.desc, f.interno, f.fatal].every(filled);
-  if (!base) return false;
   if (f.bindMode === "pedido") return filled(f.pedidoId);
-  return [f.cliente, f.tipo].every(filled);
+  return filled(f.tipo);
 }
 
 function pedidoComplete() {
   const f = state.form || {};
-  return [f.cliente, f.desc, f.tipo, f.interno, f.fatal].every(filled);
+  return filled(f.tipo);
+}
+
+function prefillsPedido(form) {
+  if (form.bindMode !== "pedido" || form.pedidoId || !state.pedidos.length) return form;
+  const p = state.pedidos[0];
+  form.pedidoId = p.id;
+  form.pedidoQuery = pedidoLabel(p);
+  return form;
 }
 
 function newTaskForm(extra = {}) {
-  return {
+  return prefillsPedido({
     bindMode: "avulso",
     pedidoId: "",
     pedidoQuery: "",
     files: [],
     column: "a-fazer",
     origem: "Externo",
+    title: "Revisar minuta de recurso",
+    desc: "Revisar a minuta e apontar os ajustes antes do protocolo.",
+    cliente: "Larissa Prado Vianna",
     tipo: "",
     interno: "2026-08-28",
     fatal: "2026-09-10",
     ...extra,
-  };
+  });
 }
 
 function syncCreateSave() {
@@ -1713,6 +1720,7 @@ document.addEventListener("click", (e) => {
   if (t.dataset.bindMode) {
     collectForm();
     state.form.bindMode = t.dataset.bindMode;
+    prefillsPedido(state.form);
     render();
     return;
   }
@@ -1760,6 +1768,7 @@ document.addEventListener("click", (e) => {
   }
   if (action === "next-onboard") {
     if (!state.accountType) return;
+    fillOnboardDefaults();
     state.onboardStep = 2;
     render();
     return;
